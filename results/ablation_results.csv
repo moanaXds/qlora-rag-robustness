@@ -1,0 +1,9 @@
+ablation_id,name,comparison,baseline_accuracy,conditioned_accuracy,delta_accuracy,isolates,limitation
+ABL-1A,Base: Question-Only vs RAG (Good Evidence),E3 (RAG C1) - E1 (Q-Only),0.705,0.82,0.115,Net performance gain from intact retrieved context over frozen parametric memory.,Cannot isolate whether gain is genuine reasoning or lexical pattern matching.
+ABL-1B,QLoRA: Question-Only vs RAG (Good Evidence),E7 (RAG C1) - E2 (Q-Only),0.71,0.9,0.19,Impact of retrieved evidence on adapter fine-tuned with context block.,E2 suffers input-distribution shift since training included context blocks.
+ABL-2_Base_C2,Base: Good vs Incomplete Evidence Degradation,Base (C1) - Base (C2),0.82,0.59,-0.23,Vulnerability to missing findings and outcome suppression.,Does not prove whether model knows what is missing without manual audit.
+ABL-2_Base_C3,Base: Good vs Irrelevant Evidence Degradation,Base (C1) - Base (C3),0.82,0.785,-0.035,Sensitivity to off-target distractor interference.,Heuristic lexical filtering cannot guarantee zero semantic overlap.
+ABL-2_Base_C4,Base: Good vs Misleading Evidence Degradation,Base (C1) - Base (C4),0.82,0.385,-0.435,Vulnerability to direct counterfactual evidence injection.,Restricted to synthetic outcome-inversion templates.
+ABL-2_QLoRA_C2,QLoRA: Good vs Incomplete Evidence Degradation,QLoRA (C1) - QLoRA (C2),0.9,0.435,-0.465,Vulnerability to missing findings and outcome suppression.,Does not prove whether model knows what is missing without manual audit.
+ABL-2_QLoRA_C3,QLoRA: Good vs Irrelevant Evidence Degradation,QLoRA (C1) - QLoRA (C3),0.9,0.75,-0.15,Sensitivity to off-target distractor interference.,Heuristic lexical filtering cannot guarantee zero semantic overlap.
+ABL-2_QLoRA_C4,QLoRA: Good vs Misleading Evidence Degradation,QLoRA (C1) - QLoRA (C4),0.9,0.365,-0.535,Vulnerability to direct counterfactual evidence injection.,Restricted to synthetic outcome-inversion templates.

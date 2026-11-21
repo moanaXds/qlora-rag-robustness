@@ -1,0 +1,487 @@
+
+
+RESEARCH METHODOLOGY
+Robustness of QLoRA-Adapted RAG Systems
+to Bad Retrieved Evidence
+Researcher: Muanna Hamid
+Professor: Azka Atiq
+Degree: BS Data Science
+Department of Computer Science
+FAST-NUCES, Islamabad
+November 2026
+
+Abstract
+
+This study investigates whether standard question-answering (QA) instruction fine-tuning using 4-bit Quantized Low-Rank Adaptation (QLoRA) changes a compact language model’s ability to use reliable retrieved evidence and resist defective evidence in a Retrieval-Augmented Generation (RAG) setting. The experiment compares a frozen Qwen2.5-1.5B-Instruct reader with a QLoRA-adapted version using the PubMedQA pqa_labeled dataset. The 1,000 examples are partitioned deterministically into 800 training examples and 200 held-out test examples. Four controlled evidence conditions are constructed: good, incomplete, irrelevant, and misleading. Both model variants receive the same cached evidence passages and prompt structure. Ten configurations are evaluated, including two question-only baselines and eight RAG configurations. Outcomes include three-class decision accuracy and Macro-F1, counterfactual adoption under misleading evidence, correct abstention under incomplete evidence, rejection of irrelevant evidence, evidence grounding in a manually audited sample, and inference latency. All data transformations, exclusions, prompts, model settings, and random seeds are recorded for reproducibility.
+
+Research Aim and Questions
+
+Retrieval-Augmented Generation combines an external retrieval component with a language model that generates answers using retrieved text. Retrieval can improve factual grounding, but retrieved passages may be incomplete, irrelevant, or contradictory. This study examines whether ordinary QA-aligned QLoRA adaptation changes how a compact reader model responds to these evidence failures.
+The study addresses three research questions:
+1. RQ1 - Decision accuracy: How does QA-aligned QLoRA fine-tuning affect three-class decision accuracy (yes, no, maybe) across good, incomplete, irrelevant, and misleading evidence compared with the frozen base reader?
+2. RQ2 - Bad-context compliance: Does QLoRA increase or decrease the tendency to adopt an explicitly counterfactual clinical claim supplied in misleading retrieved evidence?
+3. RQ3 - Abstention and rejection: How does QLoRA affect the model’s ability to abstain when key evidence is missing and to ignore passages that are unrelated to the question?
+The study is diagnostic rather than a proposal for a new retrieval defense. The retriever and evidence realizations are controlled so that the main comparison is between the frozen base reader and its QLoRA-adapted counterpart.
+
+
+
+Extended Literature Review: Recent Research on Retrieval Noise and Knowledge Conflicts
+
+Recent research has shown that retrieval-augmented generation (RAG) systems do not always become more reliable simply because external information is added to a language model. Retrieved passages can be incomplete, irrelevant, outdated, or directly contradictory. These problems can affect the model's final answer, even when the model is capable of answering the question correctly without the retrieved material.
+The following studies, published between 2025 and 2026, examine different aspects of this problem. Some focus on identifying retrieval noise, while others propose methods for detecting conflicts, estimating source reliability, improving confidence calibration, or reducing the effect of misleading evidence. Together, they provide a foundation for studying whether ordinary QLoRA fine-tuning changes how a language model responds to unreliable retrieved information.
+
+Review of Additional Research Papers
+
+Paper 1: Pandora's Box or Aladdin's Lamp: A Comprehensive Analysis Revealing the Role of RAG Noise in Large Language Models
+Authors: Jinyang Wu et al.
+Year and venue: 2025, Proceedings of ACL 2025, Long Papers
+Official paper: https://aclanthology.org/2025.acl-long/
+This study examines how different forms of noise in retrieved passages affect the performance of large language models. Instead of treating all irrelevant information as one category, the authors introduce NoiserBench, a benchmark that separates retrieval noise into seven types. These include semantic noise, malformed text, spelling errors, counterfactual information, and passages that discuss the correct topic without providing the actual answer.
+The researchers evaluate several instruction-tuned language models using different retrieval settings, including BM25 and dense retrieval. They examine how model performance changes as the amount and type of noise in the retrieved context increase. The evaluation considers answer accuracy and the models' tendency to produce unsupported or incorrect answers.
+One important finding is that retrieval noise does not always have the same effect. Some forms of noise can reduce performance considerably, particularly when the retrieved passage directly contradicts the correct answer. Other forms may have a smaller or even positive effect under certain conditions. This suggests that the relationship between retrieval noise and model performance is more complicated than simply classifying every imperfect passage as harmful.
+However, the study mainly evaluates existing models rather than investigating whether standard parameter-efficient fine-tuning changes their response to noisy evidence. This leaves an important question for the present research: does ordinary QA-aligned QLoRA training make a model better at filtering unreliable passages, or does it make the model more likely to follow misleading information?
+
+Paper 2: Astute RAG: Overcoming Imperfect Retrieval Augmentation and Knowledge Conflicts for Large Language Models
+Authors: Fei Wang, Xingchen Wan, Ruoxi Sun, Jiefeng Chen, and Sercan O. Arik
+Year and venue: 2025, Proceedings of ACL 2025, Long Papers
+Official paper: https://aclanthology.org/2025.acl-long.1476/
+Astute RAG investigates a common weakness in retrieval-augmented generation: retrieved information is not always relevant or correct. A model may receive passages that are unrelated to the question, contain misleading claims, or disagree with information already stored in its parameters.
+The authors propose a framework that allows a model to consider its internal knowledge before relying on retrieved information. The method first elicits information from the model, then compares and consolidates that information with external passages, and finally produces an answer based on the perceived reliability of the available sources.
+The study evaluates the approach using several question-answering benchmarks and language models. Its main contribution is the idea that retrieved evidence should not automatically be treated as reliable simply because it was returned by a retrieval system. The model needs to consider possible conflicts between external information and its own knowledge.
+Although this approach provides a useful way to handle imperfect retrieval, it relies on multiple reasoning and prompting stages. These stages can increase inference time and token consumption. The study also does not directly establish whether a smaller model can learn similar behaviour through ordinary QLoRA fine-tuning.
+This limitation is relevant to the present research because it motivates an investigation into whether a compact model can become more careful when using external evidence without requiring a separate multi-stage conflict-resolution framework.
+
+Paper 3: Seeing through the Conflict: Transparent Knowledge Conflict Handling in Retrieval-Augmented Generation
+Authors: Hua Ye et al.
+Year and venue: 2026, Proceedings of the AAAI Conference on Artificial Intelligence
+Official paper: https://ojs.aaai.org/index.php/AAAI/article/view/40740
+DOI: https://doi.org/10.1609/aaai.v40i40.40740
+This paper focuses on knowledge conflicts that occur when a retrieved passage disagrees with the information a language model already knows. The authors introduce Transparent Conflict Resolution (TCR), a framework designed to help models identify these conflicts instead of blindly accepting external information.
+The proposed approach separates two questions: whether a passage is relevant to the query and whether the information in that passage is factually consistent. It also estimates whether the model can answer the question using its internal knowledge. These signals are then used to guide the final response through a lightweight soft-prompt mechanism.
+The researchers evaluate TCR across seven knowledge-conflict benchmarks. Their reported results show improvements in conflict detection and knowledge-gap recovery, alongside a reduction in cases where models follow misleading retrieved information. The method is also designed to add only a small number of trainable parameters.
+Despite these improvements, TCR uses a specialized conflict-resolution mechanism rather than standard end-to-end QA fine-tuning with QLoRA. It therefore does not answer whether ordinary low-rank adaptation of a reader model can produce similar behaviour without additional conflict-detection components.
+The present research builds on this unresolved issue by examining whether QLoRA changes how a compact language model responds to good, incomplete, irrelevant, and misleading evidence.
+
+Paper 4: Conflict-Aware Soft Prompting for Retrieval-Augmented Generation (CARE)
+Authors: Eunseong Choi, June Park, Hyeri Lee, and Jongwuk Lee
+Year and venue: 2025, Proceedings of EMNLP 2025
+Official paper: https://aclanthology.org/2025.emnlp-main.1371/
+DOI: https://doi.org/10.18653/v1/2025.emnlp-main.1371
+CARE addresses situations in which retrieved information conflicts with a language model's internal knowledge. The authors introduce a context assessor that examines the retrieved passages and produces compact guidance for the language model. This guidance helps the model decide whether it should rely on the external context or its own knowledge.
+The framework uses grounded and adversarial soft prompting to train the context assessor to recognize unreliable information. It is evaluated on question-answering and fact-checking benchmarks involving knowledge conflicts. The paper reports an average performance improvement of 5.0% over the evaluated baselines.
+CARE demonstrates that a model can benefit from an additional component that assesses the reliability of retrieved context before the final answer is generated. However, this design is different from directly fine-tuning the complete reader model using ordinary QA examples. It also does not fully address cases where the evidence is incomplete rather than directly contradictory.
+This distinction matters for the present study. A passage may be misleading because it contains a false claim, but it may also be unreliable because it leaves out the information needed to answer the question. The proposed experiments therefore examine both misleading and incomplete evidence.
+
+Paper 5: TruthfulRAG: Resolving Factual-level Conflicts in Retrieval-Augmented Generation with Knowledge Graphs
+Authors: Shuyi Liu, Yu-Ming Shang, and Xi Zhang
+Year and venue: 2026, Proceedings of the AAAI Conference on Artificial Intelligence
+Official paper: https://doi.org/10.1609/aaai.v40i38.40489
+TruthfulRAG approaches knowledge conflicts from a structured information perspective. Rather than passing retrieved passages directly to the language model, the framework extracts factual relationships from the text and represents them as knowledge graph triples. It then uses graph-based retrieval and entropy-based filtering to identify potentially conflicting information.
+This approach aims to detect conflicts at the level of individual facts and relationships instead of relying only on surface-level text similarity. The authors evaluate the framework on knowledge-intensive question-answering and conflict-resolution benchmarks and report improvements over the comparison methods.
+A key strength of this approach is that it provides a more structured way to examine relationships between facts. However, extracting accurate triples from unstructured text can be difficult, particularly when the source contains complex sentences, technical terminology, or scientific explanations. Graph construction and conflict analysis also introduce additional processing requirements.
+The present research takes a different direction. Instead of introducing a separate knowledge graph pipeline, it studies how a compact language model responds to the original retrieved passages after QLoRA adaptation. This makes it possible to investigate whether the model itself becomes more or less reliable when dealing with imperfect evidence.
+
+Paper 6: ReliabilityRAG: Effective and Provably Robust Defense for RAG-based Web-Search
+Authors: Zeyu Shen, Basileal Imana, Tong Wu, Chong Xiang, Prateek Mittal, and Aleksandra Korolova
+Year and venue: 2025, Advances in Neural Information Processing Systems (NeurIPS 2025)
+Official paper: https://proceedings.neurips.cc/paper_files/paper/2025/hash/41457d56a2fdd20b4c072190290a549b-Abstract-Conference.html
+ReliabilityRAG studies the security and reliability of RAG systems that retrieve information from web-search results. In these systems, attackers may attempt to influence the final answer by placing misleading or malicious content in documents that are likely to be retrieved.
+The authors propose a defense mechanism that examines relationships between retrieved documents. It uses a contradiction graph to represent conflicts between passages and applies a selection procedure to identify a more reliable set of documents. The framework also considers external reliability signals, such as document ranking, when deciding which information should be trusted.
+The study evaluates the method under different levels of adversarial document injection. Its results indicate that document-level reliability analysis can reduce the effect of malicious or misleading retrieved information while preserving much of the system's performance on normal queries.
+However, the approach is designed for web-search settings where external ranking and reliability signals are available. It also relies on additional components for identifying contradictions between documents. These assumptions may not hold in a simple RAG system that retrieves passages from a fixed collection of academic documents.
+The present research therefore examines a different setting: a reader model receiving retrieved evidence without a separate reliability-ranking or contradiction-detection system. The focus is on the behaviour of the model itself after QLoRA adaptation.
+
+Paper 7: Retrieval is Not Enough: Enhancing RAG through Test-Time Critique and Optimization (AlignRAG)
+Authors: Jiaqi Wei et al.
+Year and venue: 2025, Advances in Neural Information Processing Systems (NeurIPS 2025)
+Official paper: https://proceedings.neurips.cc/paper_files/paper/2025/hash/1f09e1ee5035a4c3fe38a5681cae5815-Abstract-Conference.html
+AlignRAG examines a problem that occurs when a language model receives relevant evidence but still produces reasoning that is inconsistent with that evidence. The authors describe this problem as reasoning misalignment and propose a framework that uses a separate Critic Language Model to evaluate the generated reasoning.
+The critic is trained to identify differences between evidence-aligned and evidence-misaligned reasoning. It then provides feedback that helps improve the model's response. The framework also introduces an automatic stopping mechanism so that the critique process does not continue for more iterations than necessary.
+The paper reports improvements in reasoning performance, including better results on out-of-domain tasks. It also shows that a smaller trained critic can be competitive with a much larger frozen critic in the evaluated setting.
+However, AlignRAG separates answer generation and critique into different stages. This creates additional inference requirements and introduces a dependency on an auxiliary critic model. Its main focus is also on reasoning alignment rather than the specific behaviour of a single compact reader model under controlled scientific evidence conditions.
+The present study investigates whether a single QLoRA-adapted reader can show improved or reduced resistance to unreliable evidence without using a separate critic model.
+
+Paper 8: Retrieval-Augmented Generation with Estimation of Source Reliability (RA-RAG)
+Authors: Jeongyeon Hwang, Junyoung Park, Hyejin Park, Dongwoo Kim, Sangdon Park, and Jungseul Ok
+Year and venue: 2025, Proceedings of EMNLP 2025
+Official paper: https://aclanthology.org/2025.emnlp-main.1738/
+RA-RAG focuses on the fact that different information sources may have different levels of reliability. Standard retrieval systems often rank documents according to their relevance to a query. However, a highly relevant document is not necessarily accurate or trustworthy.
+To address this problem, the authors propose a framework that estimates source reliability by comparing information across multiple sources. It then prioritizes documents from more reliable sources and combines information from them using weighted majority voting.
+The study evaluates the approach in settings where retrieved sources have different reliability levels. Its results suggest that considering source reliability can improve factual accuracy when the retrieved collection contains unreliable information.
+One limitation is that the approach depends on having multiple sources available for comparison. If a system retrieves only one passage, it may not have enough independent information to estimate reliability through cross-checking.
+This creates a useful distinction for the present research. Rather than relying on agreement between multiple external sources, the proposed experiments examine how a model behaves when it receives a controlled set of passages that may be incomplete, irrelevant, or misleading.
+
+Paper 9: NOVA: NOise-aware Verbal Confidence CAlibration for Robust Large Language Models in RAG Systems
+Authors: Jiayu Liu et al.
+Year and venue: 2026, Findings of EMNLP 2026
+Official paper: https://aclanthology.org/2026.findings-emnlp.705/
+NOVA investigates how retrieval noise affects the confidence expressed by language models. A model may produce an incorrect answer from misleading evidence while still expressing strong confidence in that answer. This is a serious problem because answer accuracy alone does not show whether the model recognizes that its evidence is unreliable.
+The authors introduce a set of noise-aware calibration rules and use them to create supervised training examples. These examples teach the model to assess the usefulness of retrieved passages before producing an answer and a verbal confidence estimate.
+The study evaluates the approach across multiple question-answering benchmarks. Its reported results show improvements in confidence calibration both on the training-related benchmark and on other evaluation tasks.
+However, NOVA focuses on verbal confidence calibration. It does not establish that ordinary QA-aligned QLoRA fine-tuning will automatically improve the model's ability to recognize uncertainty. It also leaves room for further investigation into smaller language models and different forms of evidence failure.
+The present research is related to this problem because it examines whether standard QA-aligned QLoRA changes the model's tendency to follow misleading evidence or abstain when important information is missing. It does not, however, claim to measure full probability-based confidence calibration unless such a metric is added to the experimental design.
+
+Paper 10: MAGIC: A Multi-Hop and Graph-Based Benchmark for Inter-Context Conflicts in Retrieval-Augmented Generation
+Authors: Jungyeon Lee, Lee Kangmin, and Taeuk Kim
+Year and venue: 2025, Findings of EMNLP 2025
+Official paper: https://aclanthology.org/2025.findings-emnlp.466/
+MAGIC introduces a benchmark for evaluating how language models handle conflicts between multiple retrieved passages. Unlike evaluations that focus only on whether a model can produce the correct answer, this benchmark also examines whether the model can identify and locate contradictions within the retrieved information.
+The benchmark uses knowledge graph structures to construct different types of conflicts. These include cases involving multiple reasoning steps, where a contradiction may not be obvious from individual words or sentences. The authors evaluate both open-source and proprietary language models on conflict detection and conflict localization.
+The results show that identifying a conflict becomes more difficult when the problem requires multi-hop reasoning. The study also highlights a difference between simply detecting that something is wrong and identifying the exact information responsible for the contradiction.
+MAGIC is useful because it provides a way to study the weaknesses of existing models when they receive conflicting evidence. However, it is primarily an evaluation benchmark rather than a method for adapting a model to become more robust. Its focus on constructed conflicts also leaves questions about how models behave with real scientific passages.
+The present research addresses a related but narrower question: whether QLoRA adaptation changes a compact language model's behaviour when it receives controlled good, incomplete, irrelevant, and misleading evidence from a scientific question-answering dataset.
+
+Overall Observations from the Literature
+
+The reviewed studies point to several common findings.
+First, retrieved information should not automatically be treated as reliable. A passage may be relevant to the topic but still fail to support the answer. It may also contain a direct contradiction or omit an important fact. These differences matter because each type of evidence problem can affect a model in a different way.
+Second, several studies improve RAG reliability by introducing additional components. These include context assessors, conflict detectors, source-reliability estimators, knowledge graphs, and separate critic models. Such approaches show that evidence assessment is an important part of reliable RAG, but they can also increase system complexity and inference requirements.
+Third, the literature contains work on specialized fine-tuning and prompting methods, but it does not directly settle the effect of ordinary QA-aligned QLoRA adaptation on a compact reader model. A model trained to answer questions may become better at producing answers, but this does not necessarily mean that it becomes better at rejecting unreliable evidence.
+Finally, many studies evaluate general question-answering or web-search settings. Scientific question answering introduces a different challenge because evidence may be incomplete, technical, or dependent on specific findings. This makes PubMedQA a useful setting for a controlled investigation of how a compact model responds to different evidence conditions.
+These observations lead to the research gap discussed in the next section: the effect of standard QA-aligned QLoRA adaptation on a model's behaviour under imperfect retrieved evidence remains insufficiently established.
+3. Cross-Paper Comparison
+The papers reviewed above examine retrieval reliability from different angles. Some investigate how noise affects model performance, while others introduce additional mechanisms to detect conflicts, estimate source reliability, or improve reasoning. The following table compares their main research settings, methods, evaluation approaches, and limitations.
+
+
+
+
+Paper
+Dataset or evaluation setting
+Main method
+Models or adaptation approach
+Evaluation focus
+Main reported finding
+Main limitation
+Pandora's Box or Aladdin's Lamp (Wu et al.)
+NoiserBench; multiple QA and reasoning datasets
+Seven categories of retrieval noise; BM25 and dense retrieval
+Instruction-tuned models; no QLoRA comparison
+Accuracy and sensitivity to different noise types
+Counterfactual and other harmful noise can substantially reduce model performance; some noise can have different effects
+Does not investigate ordinary QLoRA adaptation
+Astute RAG (Wang et al.)
+Natural Questions, HotpotQA, PopQA, and real-world search retrieval
+Internal knowledge elicitation and iterative evidence consolidation
+Multiple proprietary and open-source LLMs; prompting-based framework
+Answer accuracy and knowledge-conflict handling
+Shows that retrieved passages can be imperfect and that models need to compare external evidence with internal knowledge
+Multiple reasoning stages can increase inference cost
+TCR (Ye et al.)
+Seven knowledge-conflict benchmarks
+Separates semantic relevance from factual consistency; uses self-answerability signals
+Llama and Mistral models; lightweight soft-prompt guidance
+Conflict detection, knowledge-gap recovery, and misleading-context overrides
+Reduces misleading-context overrides and improves conflict detection
+Uses a specialized soft-prompt mechanism rather than standard QLoRA reader fine-tuning
+CARE (Choi et al.)
+Natural Questions, HotpotQA, and fact-checking benchmarks
+Context assessor and grounded/adversarial soft prompting
+Llama and Mistral models; context-assessment component
+QA accuracy and conflict resilience
+Reports an average performance gain of 5.0% on evaluated tasks
+Requires an additional context-assessment component; incomplete evidence is not its main focus
+TruthfulRAG (Liu et al.)
+FaithEval and other knowledge-intensive conflict benchmarks
+Knowledge graph construction, query-based graph retrieval, and entropy-based filtering
+Qwen and Mistral models; graph-based evidence processing
+Factual accuracy and conflict handling
+Reports improvements over comparison methods on knowledge-conflict benchmarks
+Graph extraction and processing can add complexity, especially for unstructured technical text
+ReliabilityRAG (Shen et al.)
+Adversarial web-search and poisoned-document settings
+Contradiction graph and reliability-based document selection
+Llama, Mistral, and other evaluated models; external reliability signals
+Attack success rate and benign answer accuracy
+Reports a substantial reduction in attack success under document poisoning
+Designed around web-search reliability signals and additional contradiction analysis
+AlignRAG (Wei et al.)
+GSM8K-RAG, 2WikiMultiHopQA, HotpotQA, and related reasoning tasks
+Critique-driven alignment using a separate critic model
+Llama and Qwen models; LoRA-trained critic
+Reasoning accuracy and out-of-domain performance
+Reports a 12.1% improvement over the Self-Refine baseline on out-of-domain tasks
+Uses an additional critic and iterative inference
+RA-RAG (Hwang et al.)
+Multi-source reliability simulation and factual QA
+Estimates source reliability and uses weighted majority voting
+Llama and Mistral models; selective retrieval
+Factual accuracy and reliability estimation
+Reports better accuracy when sources have different reliability levels
+Depends on having multiple sources available for cross-checking
+NOVA (Liu et al.)
+HotpotQA, StrategyQA, Natural Questions, and Bamboogle
+Noise-aware verbal confidence rules and supervised fine-tuning
+Llama, Mistral, and Qwen models; SFT
+Expected Calibration Error and confidence behaviour
+Reports improved calibration under noisy retrieval conditions
+Focuses on verbal confidence calibration rather than the effect of ordinary QA-aligned QLoRA
+MAGIC (Lee et al.)
+MAGIC benchmark with single-hop and multi-hop conflicts
+Knowledge-graph-based construction of inter-context conflicts
+Proprietary and open-source LLMs; evaluation benchmark
+Conflict detection and conflict localization
+Shows that conflict localization becomes difficult, especially in multi-hop settings
+Primarily an evaluation benchmark; does not propose a model-adaptation method
+
+Note: Numerical results should be quoted only after checking the corresponding tables or figures in the original papers. The values in the individual paper reviews should be used consistently with this comparison table. Do not combine percentages, percentage-point changes, and relative improvements as if they were the same measurement.
+
+4. Research Gap Analysis
+
+The reviewed literature demonstrates that retrieval noise and knowledge conflicts are important problems in RAG systems. However, the existing studies do not fully answer how ordinary QA-aligned QLoRA fine-tuning affects a compact language model's behaviour when it receives unreliable evidence.
+Three research gaps are particularly relevant to this project.
+4.1 Research Gap 1: The Effect of Ordinary QLoRA Adaptation on Bad-Evidence Following
+Several studies show that language models can be misled by retrieved passages. Pandora's Box or Aladdin's Lamp examines different forms of retrieval noise, while TCR and CARE introduce specialized mechanisms to help models identify unreliable context.
+However, these approaches do not directly answer whether ordinary question-answering fine-tuning through QLoRA changes a model's natural response to bad evidence. There is a difference between training a model specifically to detect conflicts and simply training it to answer questions using examples.
+This creates the first research gap: it remains unclear whether standard QA-aligned QLoRA makes a compact reader model more resistant to misleading evidence or more likely to follow it.
+The proposed study addresses this by comparing a frozen base model with its QLoRA-adapted version under the same controlled evidence conditions.
+4.2 Research Gap 2: Model Behaviour When Evidence Is Incomplete or Does Not Support an Answer
+Many RAG studies focus on direct contradictions or unreliable sources. However, not all bad evidence contains a false statement. Sometimes a passage discusses the correct topic but does not include the information needed to answer the question.
+Research such as NOVA highlights the importance of confidence and uncertainty under noisy retrieval. Astute RAG and MAGIC also show that the relationship between retrieved evidence and the final answer is not always straightforward.
+Despite this work, more investigation is needed into whether ordinary QA-aligned fine-tuning changes a model's ability to recognize when the available evidence is insufficient.
+This creates the second research gap: the effect of QLoRA adaptation on correct abstention and evidence use under incomplete or irrelevant context remains insufficiently established.
+The proposed study addresses this by including incomplete and irrelevant evidence conditions and measuring whether the model gives an unsupported answer or appropriately abstains.
+4.3 Research Gap 3: Robustness Without Additional Conflict-Resolution Components
+Several recent approaches improve RAG reliability through additional components. These include context assessors, critic models, knowledge graphs, source-reliability estimators, and contradiction-detection mechanisms.
+Although these methods can improve performance, they introduce extra processing steps and may require additional models or computational resources. Their results do not necessarily tell us whether a compact reader model can develop more reliable evidence-handling behaviour through lightweight adaptation alone.
+This creates the third research gap: it remains unclear how much robustness can be achieved through single-model QLoRA adaptation without adding a separate conflict detector, critic, or knowledge-graph pipeline.
+The proposed study addresses this by using one compact reader model and comparing its frozen and adapted versions under the same experimental conditions.
+5. Research Gap Justification and Proposed Contribution
+5.1 What Existing Research Has Established
+The reviewed literature has established several important points:
+1. Retrieved passages can contain different forms of noise, including irrelevant information, incomplete evidence, and direct factual contradictions.
+2. Models do not always distinguish between topical relevance and factual support.
+3. Specialized approaches can improve conflict detection, source assessment, reasoning alignment, and confidence calibration.
+4. Additional components can improve reliability, but may also increase inference complexity and computational requirements.
+5. Evaluating answer accuracy alone is not sufficient to understand how a model behaves when the evidence is unreliable.
+These findings establish the importance of evaluating RAG systems under controlled evidence conditions rather than assuming that retrieved information is always useful.
+5.2 What Remains Insufficiently Investigated
+Despite this progress, an important question remains unanswered: what happens when a model is adapted using ordinary QA-aligned QLoRA training, without an explicit objective for detecting retrieval noise or resolving knowledge conflicts?
+The effect of this type of adaptation cannot be assumed to be positive. Fine-tuning may improve the model's ability to answer questions, but improved answer generation does not automatically mean improved evidence grounding. It is possible that an adapted model becomes more willing to produce answers even when the retrieved passage is incomplete or misleading.
+This study therefore does not assume that QLoRA will improve robustness. Instead, it treats the direction of the effect as an empirical question and compares the behaviour of the base and adapted models.
+5.3 Proposed Research Contribution
+The project investigates the effect of QA-aligned QLoRA adaptation on a compact language model used in a RAG-style question-answering setting.
+The proposed experiment compares a frozen Qwen2.5 reader with a QLoRA-adapted version. Both models receive the same questions and corresponding evidence under four controlled conditions:
+Good evidence: the retrieved passage contains the information needed to answer the question.
+Incomplete evidence: the passage is related to the question but does not provide the key information needed for a reliable answer.
+Irrelevant evidence: the retrieved passages do not provide useful support for the target question.
+Misleading evidence: the retrieved passage contains a claim that contradicts the correct answer.
+The evaluation goes beyond overall accuracy. It also examines whether the model follows misleading claims, whether it abstains when evidence is insufficient, and whether its answers are supported by the supplied passages.
+The study is designed as a controlled comparison rather than a proposal for a new conflict-detection architecture. Its contribution is to isolate and measure the behavioural effect of ordinary QA-aligned QLoRA adaptation under different evidence conditions.
+5.4 Scope and Boundaries of the Study
+The study focuses on one compact model family, one scientific question-answering dataset, and four controlled evidence conditions. It does not attempt to build a complete production RAG system or compare every available retrieval and conflict-resolution architecture.
+The findings will therefore be limited to the selected model, dataset, training setup, and evidence-construction procedure. They should not automatically be generalized to all language models or all RAG applications.
+The main objective is to determine whether QA-aligned QLoRA adaptation changes how a compact model uses, rejects, or follows retrieved evidence. This provides a focused experimental contribution to the broader study of reliable retrieval-augmented generation.
+2. Dataset and Data Partitioning
+2.1 Dataset
+The primary dataset is PubMedQA, using the pqa_labeled subset (Jin et al., 2019). The subset contains 1,000 biomedical research questions with expert-labelled decisions. Each record includes a PubMed identifier (pubid), a question, a context object containing parallel paragraph and section-label lists, a long_answer field, and a final_decision label in {yes, no, maybe}.
+The long_answer field contains the withheld explanatory conclusion and is treated as a target/reference field only. It is never indexed, retrieved, or inserted into any evidence context shown to either reader model. Evidence passages are constructed only from context['contexts'] and their corresponding section labels. The final_decision field supplies the classification target.
+2.2 Deterministic split and leakage controls
+Sort records by pubid and apply a deterministic split using random seed 42: 800 records for training and 200 for held-out testing.
+Use the 800 training records for QLoRA supervision and as the only corpus for the controlled background BM25 index.
+Do not place test abstracts or test long_answer text in the controlled BM25 index.
+Maintain a separate natural-retrieval benchmark index containing the 1,000 abstracts. This index is used only to calculate Recall@3; its retrieved passages are not supplied to the reader models.
+Store the split manifest, pubid lists, parsed section labels, and all exclusions so that the exact examples in each experiment can be reconstructed.
+
+
+
+
+
+Figure 1. Dataset architecture and leakage prevention
+
+
+3. Evidence Construction
+For each test query, construct a cached three-passage context for each evidence condition. Passage order is shuffled with a fixed seed, and the resulting passage text, passage IDs, condition label, and order are stored in a JSONL evidence cache. The same cached context is supplied to the Base and QLoRA readers. This prevents differences in retrieval or passage order from confounding the model comparison.
+3.1 Condition C1 - Good supporting evidence
+Slot 1 contains the intact target abstract context, formed by concatenating the available paragraphs in context['contexts'] in their original order. Slots 2 and 3 contain the two highest-ranked BM25 background abstracts retrieved from the training-only index. These background passages act as realistic distractors while the target abstract retains the relevant evidence.
+3.2 Condition C2 - Incomplete evidence
+Slot 1 contains the target abstract after removal of its outcome-bearing material. For structured records, paragraphs labelled RESULTS or FINDINGS are removed. For unstructured records without usable section labels, apply a fixed sentence-based fallback: retain the leading 60% of sentences and remove the trailing 40%, then manually verify that the retained text does not reveal the principal outcome. This fallback is a preprocessing rule, not a claim that every abstract follows the same rhetorical structure.
+Slots 2 and 3 are sampled from the training corpus using records with disjoint MeSH disease categories from the target where MeSH metadata is available. Candidate passages must also have zero overlap with the predefined query keyword set under the study tokenizer. These filters reduce the chance that the background passages restore the missing answer. Each constructed context is validated and assigned a pass/fail flag. Cases that fail validation are excluded from C2 only; report N_inc and the excluded pubids. Do not silently count failed cases as valid incomplete contexts.
+3.3 Condition C3 - Irrelevant evidence
+All three slots contain off-target biomedical abstracts selected from the training corpus. Candidate passages are drawn from low-ranked BM25 results (ranks 25-27 where available) or sampled from disjoint MeSH disease categories. A candidate is accepted only after automated keyword/entity screening and a manual spot-check confirm that it does not provide direct evidence for the target question. Because lexical and MeSH filters cannot prove semantic irrelevance, the paper will describe this as a controlled off-target condition rather than claiming perfect semantic independence.
+3.4 Condition C4 - Misleading evidence
+Slot 1 contains a manually audited counterfactual version of the target abstract. The principal outcome finding is inverted while preserving the topic, entities, and grammatical structure as far as possible. Slots 2 and 3 use the same two BM25 background passages as C1. The transformation must not invent sample sizes, effect sizes, confidence intervals, or p-values. Statistical clauses that cannot be safely transformed are removed or rewritten without fabricated numerical values. A manual audit of all 200 candidates checks that the intended finding is inverted, the wording is fluent, and no secondary sentence restates the original finding.
+The original gold label 'maybe' is retained for overall three-class evaluation. It is excluded from binary counterfactual-adoption calculations because there is no unambiguous yes/no inversion target. For binary test cases, the counterfactual target is yes when the gold label is no, and no when the gold label is yes.
+Figure 2. Three-passage evidence conditions
+
+
+4. Retrieval Method
+BM25 retrieval is implemented using rank-bm25 and BM25Okapi. The controlled background index contains only the 800 training abstracts. Text is lowercased, tokenized with the regular expression r'\b[a-zA-Z]{2,}\b', and filtered using the NLTK English stopword list. BM25 parameters are k1 = 1.5, b = 0.75, and epsilon = 0.25.
+A separate natural-retrieval benchmark uses all 1,000 abstracts to calculate Recall@3 on the 200 held-out questions. Recall@3 is the proportion of test queries for which the query’s own intact abstract appears among the top three retrieved abstracts. This benchmark characterizes retrieval coverage only; it does not feed reader-model evaluation.
+5. Model and QLoRA Fine-Tuning
+5.1 Base reader
+The reader model is Qwen/Qwen2.5-1.5B-Instruct. The frozen Base condition uses the original instruction-tuned checkpoint without parameter updates. The adapted condition uses the same checkpoint with a QLoRA adapter.
+5.2 Quantization and adapter configuration
+Component
+Setting
+Quantization
+4-bit NF4 with double quantization
+Compute dtype
+FP16 (torch.float16)
+LoRA target modules
+q_proj, k_proj, v_proj, o_proj
+LoRA rank (r)
+16
+LoRA alpha
+32
+LoRA dropout
+0.05
+Optimizer
+paged_adamw_8bit
+Learning rate
+2 × 10⁻⁴ (fixed for the planned run; verify with a short pilot before the full training run)
+Schedule / warmup
+Linear decay; 5% warmup
+Per-device batch size
+1
+Gradient accumulation
+8 (effective batch size 8)
+Epochs / optimizer steps
+1 epoch; 100 optimizer steps for 800 examples
+Training maximum sequence length
+512 tokens
+Gradient checkpointing
+Enabled
+
+For the Qwen2.5-1.5B architecture, targeting the four attention projection matrices across 28 transformer layers yields an estimated 4,358,144 trainable LoRA parameters, approximately 0.28% of the base model’s parameter count. The exact trainable parameter count must also be printed from the instantiated PEFT model and saved in the run log.
+5.3 Training examples and target construction
+QLoRA is trained on the 800 training records using supervised fine-tuning. Each example uses the model’s native chat template, with a system instruction to answer the biomedical question using the provided evidence, a user message containing the intact training abstract context and question, and an assistant target containing the reference answer and final decision.
+The target answer text must be derived only from fields permitted for supervision. The long_answer field may be used as the supervised reference target, but it must remain quarantined from all retrieval and inference contexts. It must never be copied into the evidence passage cache. The target format is: a concise answer/explanation followed by 'Final Decision: yes', 'Final Decision: no', or 'Final Decision: maybe'. If the implementation instead trains on decision labels only, that change must be documented and applied consistently before training.
+Use Qwen2.5's native ChatML template. Apply the trainer's response-only loss masking if supported by the selected TRL version, and record the exact template and masking configuration. Save the package versions and training configuration with the adapter checkpoint.
+Figure 3. QLoRA architecture and training pipeline
+
+
+6. Inference Protocol
+Both readers use identical system instructions, question text, evidence passages, and passage order for each paired experiment. In RAG configurations, the user message contains the three cached passages and the research question. In the question-only baselines, the context block is omitted.
+Decoding: greedy generation with do_sample=False; no sampling temperature.
+Maximum generation length: 128 new tokens.
+Evaluation context budget: up to 1,024 tokens for the three-passage input.
+Random seed: 42 across Python, NumPy, and PyTorch; record any deterministic-kernel limitations.
+Parse the final decision from the explicit 'Final Decision:' field. Store raw text and parsed label separately.
+The QLoRA question-only baseline (E2) is a secondary diagnostic because the adapter is trained with a context block in every training example but evaluated without one. This creates an input-distribution shift. E2 should therefore not be interpreted as a clean estimate of parametric-memory retention.
+7. Experimental Matrix
+ID
+Reader
+Input
+Condition / purpose
+E1
+Base
+Question only
+Parametric baseline
+E2
+QLoRA
+Question only
+Question-only diagnostic; distribution shift
+E3
+Base
+Three passages + question
+C1 Good evidence
+E4
+Base
+Three passages + question
+C2 Incomplete evidence
+E5
+Base
+Three passages + question
+C3 Irrelevant evidence
+E6
+Base
+Three passages + question
+C4 Misleading evidence
+E7
+QLoRA
+Three passages + question
+C1 Good evidence
+E8
+QLoRA
+Three passages + question
+C2 Incomplete evidence
+E9
+QLoRA
+Three passages + question
+C3 Irrelevant evidence
+E10
+QLoRA
+Three passages + question
+C4 Misleading evidence
+
+E1, E2, E3, E5, E6, E7, E9, and E10 are run on all 200 test queries. E4 and E8 are run on the validated incomplete-evidence subset only. Therefore, the total number of generated outputs is 1,600 + 2N_inc, not automatically 2,000. All model comparisons are paired by pubid wherever both configurations have a valid observation.
+
+
+
+
+
+
+
+
+Figure 4. Experimental matrix and evaluation pipeline
+
+
+
+8. Evaluation Metrics
+8.1 Decision accuracy and Macro-F1
+Decision Accuracy is the proportion of queries for which the parsed decision matches the gold label. Macro-F1 is the unweighted mean of class-wise F1 for yes, no, and maybe. An unparseable or missing decision is treated as an incorrect prediction for accuracy and as a false negative for the gold class in class-wise F1; it is not introduced as a fourth gold class. Report the unparseable-output count separately.
+DA = (number of correctly classified queries) / (number of evaluated queries). Macro-F1 = (F1_yes + F1_no + F1_maybe) / 3.
+8.2 Retrieval Recall@3
+Recall@3 = (number of test queries whose own intact abstract appears in the top three natural-retrieval results) / 200. This is reported separately from reader performance.
+8.3 Unconditional Counterfactual Adoption Rate (UCAR)
+For C4, evaluate only the binary subset of test queries with gold labels yes or no. UCAR is the proportion of all such binary queries for which the model's prediction equals the deliberately inverted counterfactual label. The denominator is fixed across Base and QLoRA for the same valid binary test IDs. This is the primary measure of direct adoption of misleading evidence.
+UCAR = (number of binary C4 predictions equal to the inverted label) / (number of binary test queries).
+8.4 Conditional Bad-Context-Following Rate (CBFR)
+CBFR is the proportion of incorrect binary C4 predictions that specifically adopt the inverted claim. Its denominator is the number of incorrect binary predictions for that model. Because this denominator can differ between Base and QLoRA, CBFR is descriptive and is compared using paired bootstrap resampling rather than a paired binary test alone. Always report the numerator and denominator alongside the rate.
+8.5 Correct Abstention Rate (CAR)
+CAR is evaluated only under C2. It is the proportion of valid incomplete-evidence queries for which the model explicitly states that the supplied evidence is insufficient to determine the answer. A predefined phrase list (for example, 'insufficient evidence', 'cannot be determined from the provided context', and 'does not report') is used as an automated screening proxy. Human review of audited examples validates the proxy. The denominator is N_inc.
+8.6 Irrelevant-Context Rejection Rate (IRR)
+IRR is evaluated only under C3. It is the proportion of the 200 queries for which the model does not adopt the off-target entities or claims and either gives an answer without relying on those passages or explicitly identifies the context as irrelevant. Since answering from parametric knowledge is not equivalent to grounding, IRR measures distractor rejection, not evidence grounding. The automated entity/keyword screen is validated through the manual audit.
+8.7 Grounding Rate (manual audit)
+Grounding is assessed only in the manually audited sample. For each non-abstaining audited output, annotators identify its key factual claims and mark whether each claim is supported by the supplied context. Grounding Rate is the proportion of audited non-abstaining outputs for which all key factual claims are supported. Report the number of non-abstaining outputs used as the denominator and do not generalize this sample estimate to all 200 test queries.
+8.8 Inference latency
+Measure generation wall-clock time per query on the same hardware, with GPU synchronization before and after generation. Report median and mean latency separately for each configuration. Measure BM25 CPU retrieval time separately from model generation time. Include warm-up runs and exclude them from reported timing.
+9. Statistical Analysis and Manual Audit
+9.1 Confidence intervals and paired tests
+Compute 95% confidence intervals using 10,000 paired bootstrap resamples of query IDs. Resample at the query level so that Base and QLoRA observations remain paired.
+For the four primary comparisons, compare Base RAG with QLoRA RAG separately under C1-C4. Use McNemar's test for paired binary correctness outcomes; use an exact binomial version when the discordant-pair count is small.
+For Macro-F1 and conditional metrics such as CBFR, compute paired bootstrap differences. If a bootstrap resample has a zero denominator for a conditional metric, mark that replicate undefined and report the number of valid replicates; do not silently replace it with zero.
+Use the Wilcoxon signed-rank test for paired per-query latency comparisons where the paired differences are suitable for this test.
+Apply Holm-Bonferroni correction across the four primary condition-wise Base-versus-QLoRA tests at family-wise alpha = 0.05. Treat E1 versus E2 as a secondary comparison.
+Report effect sizes, confidence intervals, adjusted p-values, and exact denominators. Statistical significance must be determined only after the experiment has been run.
+9.2 Balanced manual error audit
+Manually audit 100 outputs sampled with seed 42 across the eight RAG configurations: 25 outputs per evidence condition, comprising 12 Base outputs and 13 QLoRA outputs for each condition. Record the selected pubids and sampling procedure. The annotator should be blinded to the model identity where practical. If only one annotator is available, report that limitation and do not claim inter-rater reliability.
+Assign one mutually exclusive category using the following priority rules:
+Category
+Operational definition
+Clean Abstention
+Under C2, the output explicitly declines a determinate answer because the supplied evidence lacks the required finding.
+Bad-Evidence Exploited
+The output adopts the C4 inverted claim or relies on an off-target claim/entity under C3.
+Grounded-Correct
+The decision is correct and all key factual claims are supported by the supplied context.
+Parametric-Correct
+The decision is correct, but one or more key claims are not supported by the supplied context.
+Ungrounded Hallucination
+The decision is incorrect and key claims are unsupported, without adopting the deliberately injected misleading claim.
+Other Error
+Unwarranted abstention when sufficient evidence is present, format failure, or another error not covered above.
+
+The category counts are reported by model and evidence condition. Grounding Rate is calculated from the claim-level checklist, not inferred solely from the categorical label.
+10. Computational Environment and Reproducibility
+The planned environment is a single Google Colab runtime with an NVIDIA Tesla T4 GPU. The available VRAM, system RAM, and disk capacity can vary by session; record the actual runtime rather than treating platform estimates as guaranteed. Conduct a short pilot before full training and log peak GPU memory, training duration, and inference latency.
+Record the Python, PyTorch, CUDA, Transformers, PEFT, TRL, bitsandbytes, datasets, rank-bm25, NLTK, and scikit-learn versions. Also record the model revision, tokenizer revision, dataset version, hardware details, random seeds, and exact training arguments.
+Archive the following artifacts: deterministic train/test split manifest; parsed section labels; BM25 corpus and retrieval results; evidence JSONL cache; counterfactual passage audit sheet; prompts and chat template; QLoRA adapter checkpoint; raw model generations; parsed decisions; metric outputs; bootstrap/test results; manual audit CSV; runtime and failure logs. A public repository may be created after checking dataset licensing and removing any restricted credentials or private data.
+11. Planned Data Analysis Visualizations
+Grouped bar chart of Decision Accuracy across C1-C4 for Base and QLoRA, with 95% bootstrap confidence intervals and separate reference lines for E1/E2.
+Two-panel comparison of CAR under C2 and UCAR/CBFR under C4; do not combine rates with different denominators in a single stacked bar.
+Categorical dot plot of performance retention across the four discrete evidence conditions.
+Grounding Rate versus Decision Accuracy within the manually audited sample.
+Distribution of the six qualitative error categories by model and condition.
+Two-panel computational profile showing peak VRAM and per-query generation latency, with retrieval time reported separately.
+12. Methodological Limitations and Pre-Execution Checks
+The 60/40 fallback for unstructured abstracts is an operational heuristic. Its success must be checked manually on the resulting C2 cases, and the number of retained/excluded cases must be reported.
+MeSH and lexical filters reduce accidental relevance in C2/C3 but cannot guarantee semantic irrelevance. The validation protocol and any failures must be reported.
+Counterfactual rewriting is synthetic. Manual review of all 200 C4 passages is required, and no statistical values may be fabricated.
+The E2 question-only baseline has a context-format distribution shift because QLoRA training uses a context block.
+The manual grounding and error audit covers 100 outputs only and may be subject to single-annotator judgement.
+QLoRA learning rate is set to 2 × 10⁻⁴ for the planned run; validate memory stability and loss behavior in a pilot and freeze the value before the final experiment. Do not tune it against the held-out test results.
+Peak VRAM, wall-clock training time, and latency are empirical measurements and must be filled in after execution; they are not claimed in advance.
+References
+Dettmers, T., Pagnoni, A., Holtzman, A., & Zettlemoyer, L. (2023). QLoRA: Efficient Finetuning of Quantized LLMs. Advances in Neural Information Processing Systems 36.
+Jin, Q., Dhingra, B., Liu, Z., Cohen, W. W., & Lu, X. (2019). PubMedQA: A Dataset for Biomedical Research Question Answering. Proceedings of EMNLP-IJCNLP 2019, 2567-2577. https://doi.org/10.18653/v1/D19-1259.

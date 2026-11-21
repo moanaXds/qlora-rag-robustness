@@ -1,0 +1,77 @@
+<svg width="800" height="480" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <text x="400" y="35" font-size="17" font-weight="bold" text-anchor="middle" fill="#2c3e50">Figure 4: Distribution of Audited Qualitative Error and Grounding Categories</text>
+  <text x="400" y="55" font-size="12" fill="#7f8c8d" text-anchor="middle">Stratified Manual Audit Sample (N = 100 Outputs; 12 Base, 13 QLoRA across C1–C4)</text>
+
+  <line x1="80" y1="380" x2="750" y2="380" stroke="#bdc3c7" stroke-width="1"/>
+  <line x1="80" y1="310" x2="750" y2="310" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+  <line x1="80" y1="240" x2="750" y2="240" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+  <line x1="80" y1="170" x2="750" y2="170" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+  <line x1="80" y1="100" x2="750" y2="100" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+
+  <text x="70" y="385" font-size="11" text-anchor="end" fill="#7f8c8d">0</text>
+  <text x="70" y="315" font-size="11" text-anchor="end" fill="#7f8c8d">4</text>
+  <text x="70" y="245" font-size="11" text-anchor="end" fill="#7f8c8d">8</text>
+  <text x="70" y="175" font-size="11" text-anchor="end" fill="#7f8c8d">12</text>
+  <text x="70" y="105" font-size="11" text-anchor="end" fill="#7f8c8d">16</text>
+  <text x="25" y="240" font-size="12" font-weight="bold" text-anchor="middle" fill="#2c3e50" transform="rotate(-90 25 240)">Output Count</text>
+
+  <!-- Categories:
+       1. Grounded-Correct: Base=10 (y=205, h=175), QLoRA=11 (y=187.5, h=192.5)
+       2. Parametric-Correct: Base=12 (y=170, h=210), QLoRA=13 (y=152.5, h=227.5)
+       3. Clean Abstention: Base=3 (y=327.5, h=52.5), QLoRA=6 (y=275, h=105)
+       4. Bad-Evidence Exploited: Base=13 (y=152.5, h=227.5), QLoRA=11 (y=187.5, h=192.5)
+       5. Ungrounded Hallucination: Base=10 (y=205, h=175), QLoRA=8 (y=240, h=140)
+       6. Other Error: Base=0, QLoRA=0
+  -->
+  
+  <!-- Cat 1: Grounded-Correct (x=130) -->
+  <rect x="105" y="205" width="28" height="175" fill="#4a90e2" rx="2"/>
+  <text x="119" y="197" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">10</text>
+  <rect x="137" y="187.5" width="28" height="192.5" fill="#e67e22" rx="2"/>
+  <text x="151" y="180" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">11</text>
+  <text x="135" y="405" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#2c3e50">Grounded-Correct</text>
+
+  <!-- Cat 2: Parametric-Correct (x=240) -->
+  <rect x="215" y="170" width="28" height="210" fill="#4a90e2" rx="2"/>
+  <text x="229" y="162" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">12</text>
+  <rect x="247" y="152.5" width="28" height="227.5" fill="#e67e22" rx="2"/>
+  <text x="261" y="145" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">13</text>
+  <text x="245" y="405" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#2c3e50">Parametric-Correct</text>
+
+  <!-- Cat 3: Clean Abstention (x=350) -->
+  <rect x="325" y="327.5" width="28" height="52.5" fill="#4a90e2" rx="2"/>
+  <text x="339" y="320" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">3</text>
+  <rect x="357" y="275" width="28" height="105" fill="#e67e22" rx="2"/>
+  <text x="371" y="267" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">6</text>
+  <text x="355" y="405" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#2c3e50">Clean Abstention</text>
+
+  <!-- Cat 4: Bad-Evidence Exploited (x=460) -->
+  <rect x="435" y="152.5" width="28" height="227.5" fill="#4a90e2" rx="2"/>
+  <text x="449" y="145" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">13</text>
+  <rect x="467" y="187.5" width="28" height="192.5" fill="#e67e22" rx="2"/>
+  <text x="481" y="180" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">11</text>
+  <text x="465" y="405" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#2c3e50">Bad-Evidence</text>
+  <text x="465" y="418" font-size="10" fill="#7f8c8d" text-anchor="middle">Exploited</text>
+
+  <!-- Cat 5: Ungrounded Hallucination (x=570) -->
+  <rect x="545" y="205" width="28" height="175" fill="#4a90e2" rx="2"/>
+  <text x="559" y="197" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">10</text>
+  <rect x="577" y="240" width="28" height="140" fill="#e67e22" rx="2"/>
+  <text x="591" y="232" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">8</text>
+  <text x="575" y="405" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#2c3e50">Ungrounded</text>
+  <text x="575" y="418" font-size="10" fill="#7f8c8d" text-anchor="middle">Hallucination</text>
+
+  <!-- Cat 6: Other Error (x=675) -->
+  <rect x="655" y="378" width="28" height="2" fill="#4a90e2" rx="1"/>
+  <text x="669" y="370" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">0</text>
+  <rect x="687" y="378" width="28" height="2" fill="#e67e22" rx="1"/>
+  <text x="701" y="370" font-size="11" font-weight="bold" text-anchor="middle" fill="#2c3e50">0</text>
+  <text x="685" y="405" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#2c3e50">Other Error</text>
+
+  <!-- Legend -->
+  <rect x="260" y="445" width="15" height="15" fill="#4a90e2" rx="2"/>
+  <text x="285" y="457" font-size="12" fill="#2c3e50">Base Reader (N=48)</text>
+  <rect x="470" y="445" width="15" height="15" fill="#e67e22" rx="2"/>
+  <text x="495" y="457" font-size="12" fill="#2c3e50">QLoRA Reader (N=52)</text>
+</svg>

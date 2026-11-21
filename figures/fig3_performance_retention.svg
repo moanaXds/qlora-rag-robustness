@@ -1,0 +1,56 @@
+<svg width="750" height="450" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <text x="375" y="35" font-size="17" font-weight="bold" text-anchor="middle" fill="#2c3e50">Figure 3: Performance Retention Degradation Curves</text>
+  <text x="375" y="55" font-size="12" fill="#7f8c8d" text-anchor="middle">Decision Accuracy as Evidence Quality Transitions from Reliable to Defective</text>
+  
+  <line x1="80" y1="360" x2="680" y2="360" stroke="#bdc3c7" stroke-width="1"/>
+  <line x1="80" y1="290" x2="680" y2="290" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+  <line x1="80" y1="220" x2="680" y2="220" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+  <line x1="80" y1="150" x2="680" y2="150" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+  <line x1="80" y1="80" x2="680" y2="80" stroke="#ecf0f1" stroke-width="1" stroke-dasharray="4"/>
+  
+  <text x="70" y="365" font-size="11" text-anchor="end" fill="#7f8c8d">0%</text>
+  <text x="70" y="295" font-size="11" text-anchor="end" fill="#7f8c8d">25%</text>
+  <text x="70" y="225" font-size="11" text-anchor="end" fill="#7f8c8d">50%</text>
+  <text x="70" y="155" font-size="11" text-anchor="end" fill="#7f8c8d">75%</text>
+  <text x="70" y="85" font-size="11" text-anchor="end" fill="#7f8c8d">100%</text>
+  <text x="25" y="220" font-size="12" font-weight="bold" text-anchor="middle" fill="#2c3e50" transform="rotate(-90 25 220)">Decision Accuracy</text>
+  
+  <!-- Points for X: C1=150, C2=310, C3=470, C4=630 -->
+  <!-- Base: C1(82.0% -> y=130.4), C2(59.0% -> y=194.8), C3(78.5% -> y=140.2), C4(38.5% -> y=252.2) -->
+  <polyline points="150,130.4 310,194.8 470,140.2 630,252.2" fill="none" stroke="#4a90e2" stroke-width="3"/>
+  <circle cx="150" cy="130.4" r="6" fill="#4a90e2"/>
+  <text x="150" y="120" font-size="11" font-weight="bold" fill="#4a90e2" text-anchor="middle">82.0%</text>
+  <circle cx="310" cy="194.8" r="6" fill="#4a90e2"/>
+  <text x="310" y="185" font-size="11" font-weight="bold" fill="#4a90e2" text-anchor="middle">59.0%</text>
+  <circle cx="470" cy="140.2" r="6" fill="#4a90e2"/>
+  <text x="470" y="130" font-size="11" font-weight="bold" fill="#4a90e2" text-anchor="middle">78.5%</text>
+  <circle cx="630" cy="252.2" r="6" fill="#4a90e2"/>
+  <text x="630" y="242" font-size="11" font-weight="bold" fill="#4a90e2" text-anchor="middle">38.5%</text>
+  
+  <!-- QLoRA: C1(90.0% -> y=108), C2(43.5% -> y=238.2), C3(75.0% -> y=150), C4(36.5% -> y=257.8) -->
+  <polyline points="150,108 310,238.2 470,150 630,257.8" fill="none" stroke="#e67e22" stroke-width="3" stroke-dasharray="4"/>
+  <rect x="144" y="102" width="12" height="12" fill="#e67e22"/>
+  <text x="150" y="95" font-size="11" font-weight="bold" fill="#e67e22" text-anchor="middle">90.0%</text>
+  <rect x="304" y="232.2" width="12" height="12" fill="#e67e22"/>
+  <text x="310" y="225" font-size="11" font-weight="bold" fill="#e67e22" text-anchor="middle">43.5%</text>
+  <rect x="464" y="144" width="12" height="12" fill="#e67e22"/>
+  <text x="470" y="168" font-size="11" font-weight="bold" fill="#e67e22" text-anchor="middle">75.0%</text>
+  <rect x="624" y="251.8" width="12" height="12" fill="#e67e22"/>
+  <text x="630" y="276" font-size="11" font-weight="bold" fill="#e67e22" text-anchor="middle">36.5%</text>
+  
+  <!-- X Labels -->
+  <text x="150" y="385" font-size="12" font-weight="bold" fill="#2c3e50" text-anchor="middle">C1: Good</text>
+  <text x="310" y="385" font-size="12" font-weight="bold" fill="#2c3e50" text-anchor="middle">C2: Incomplete</text>
+  <text x="470" y="385" font-size="12" font-weight="bold" fill="#2c3e50" text-anchor="middle">C3: Irrelevant</text>
+  <text x="630" y="385" font-size="12" font-weight="bold" fill="#2c3e50" text-anchor="middle">C4: Misleading</text>
+  
+  <!-- Legend -->
+  <line x1="270" y1="420" x2="300" y2="420" stroke="#4a90e2" stroke-width="3"/>
+  <circle cx="285" cy="420" r="5" fill="#4a90e2"/>
+  <text x="310" y="424" font-size="12" fill="#2c3e50">Frozen Base Reader</text>
+  
+  <line x1="470" y1="420" x2="500" y2="420" stroke="#e67e22" stroke-width="3" stroke-dasharray="4"/>
+  <rect x="480" y="415" width="10" height="10" fill="#e67e22"/>
+  <text x="510" y="424" font-size="12" fill="#2c3e50">QLoRA-Adapted Reader</text>
+</svg>
